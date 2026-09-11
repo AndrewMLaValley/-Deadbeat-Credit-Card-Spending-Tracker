@@ -478,22 +478,50 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
 <script>
 const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7Oe";
+const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
 
-const { createClient } = window.supabase;
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-console.log("Deadbeat Tracker JavaScript loaded successfully.");
 const $ = id => document.getElementById(id);
 
+let supabase = null;
 let currentUser = null;
 let currentTracker = null;
 let cards = [];
 let entries = [];
-let realtimeChannel = null;
+let refreshTimer = null;
+
+function setMessage(id, message) {
+  const item = $(id);
+  if (item) item.textContent = message || "";
+}
+
+function showError(message) {
+  setMessage("authMessage", message);
+  console.error(message);
+}
+
+function initializeSupabase() {
+  try {
+    if (!window.supabase || !window.supabase.createClient) {
+      throw new Error("Supabase library did not load.");
+    }
+
+    if (
+      SUPABASE_URL.includes("PASTE_") ||
+      SUPABASE_PUBLISHABLE_KEY.includes("PASTE_")
+    ) {
+      throw new Error(
+        "Add your Supabase Project URL and Publishable Key in index.html."
+      );
+    }
+
+    supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+  } catch (error) {
+    showError(error.message);
+  }
+}
 
 function cash(value) {
   return new Intl.NumberFormat("en-US", {
@@ -531,39 +559,39 @@ function showScreen(id) {
 function showSignIn() {
   $("signInPanel").classList.remove("hidden");
   $("signUpPanel").classList.add("hidden");
-  $("authMessage").textContent = "";
+  setMessage("authMessage", "");
 }
 
 function showSignUp() {
   $("signInPanel").classList.add("hidden");
   $("signUpPanel").classList.remove("hidden");
-  $("authMessage").textContent = "";
+  setMessage("authMessage", "");
 }
 
-function setMessage(id, message) {
-  $(id).textContent = message || "";
-}
 function togglePassword(fieldId, button) {
-  const field = document.getElementById(fieldId);
+  const field = $(fieldId);
 
   if (field.type === "password") {
     field.type = "text";
-    button.textContent = "Hide";
+    button.textContent = "🙈";
   } else {
     field.type = "password";
-    button.textContent = "Show";
+    button.textContent = "👁";
   }
 }
 
 async function signUp() {
+  if (!supabase) {
+    showError("Supabase is not connected.");
+    return;
+  }
+
   const displayName = $("signUpName").value.trim();
   const email = $("signUpEmail").value.trim();
   const password = $("signUpPassword").value;
 
   if (!email || !password) {
-    const message = "Enter an email address and password.";
-    setMessage("authMessage", message);
-    alert(message);
+    setMessage("authMessage", "Enter an email address and password.");
     return;
   }
 
@@ -579,33 +607,28 @@ async function signUp() {
       }
     });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    const successMessage =
-      "Account created. Check your email and confirm your account before signing in.";
-
-    setMessage("authMessage", successMessage);
-    alert(successMessage);
-
+    setMessage(
+      "authMessage",
+      "Account created. Check your email and confirm your account before signing in."
+    );
   } catch (error) {
-    console.error("Sign-up error:", error);
-
-    const message = error.message || "Unable to create the account.";
-
-    setMessage("authMessage", message);
-    alert(message);
+    setMessage("authMessage", error.message || "Unable to create account.");
   }
 }
+
 async function signIn() {
+  if (!supabase) {
+    showError("Supabase is not connected.");
+    return;
+  }
+
   const email = $("signInEmail").value.trim();
   const password = $("signInPassword").value;
 
   if (!email || !password) {
-    const message = "Enter your email address and password.";
-    setMessage("authMessage", message);
-    alert(message);
+    setMessage("authMessage", "Enter your email address and password.");
     return;
   }
 
@@ -615,21 +638,18 @@ async function signIn() {
       password
     });
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
   } catch (error) {
-    console.error("Sign-in error:", error);
-
-    const message = error.message || "Unable to sign in.";
-
-    setMessage("authMessage", message);
-    alert(message);
+    setMessage("authMessage", error.message || "Unable to sign in.");
   }
 }
 
 async function sendPasswordReset() {
+  if (!supabase) {
+    showError("Supabase is not connected.");
+    return;
+  }
+
   const email = $("signInEmail").value.trim();
 
   if (!email) {
@@ -637,30 +657,17 @@ async function sendPasswordReset() {
     return;
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + window.location.pathname
-  });
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
 
-  setMessage(
-    "authMessage",
-    error ? error.message : "Password-reset email sent."
-  );
-}
+    if (error) throw error;
 
-async function signOut() {
-  if (realtimeChannel) {
-    await supabase.removeChannel(realtimeChannel);
-    realtimeChannel = null;
+    setMessage("authMessage", "Password-reset email sent.");
+  } catch (error) {
+    setMessage("authMessage", error.message || "Unable to send reset email.");
   }
-
-  localStorage.removeItem("deadbeat_active_tracker");
-
-  await supabase.auth.signOut();
-
-  currentUser = null;
-  currentTracker = null;
-
-  showScreen("authScreen");
 }
 
 async function sha256(value) {
@@ -673,7 +680,7 @@ async function sha256(value) {
 }
 
 async function setPin() {
-  const pin = prompt("Enter a new 4-digit quick-unlock code.");
+  const pin = prompt("Enter a 4-digit quick-unlock code.");
 
   if (!/^\d{4}$/.test(pin || "")) {
     alert("The code must contain exactly 4 digits.");
@@ -690,11 +697,9 @@ async function setPin() {
 
 async function unlockWithPin() {
   const pin = $("unlockPin").value;
-  const expectedHash = localStorage.getItem(
-    "deadbeat_quick_pin_hash"
-  );
+  const storedHash = localStorage.getItem("deadbeat_quick_pin_hash");
 
-  if (!expectedHash || await sha256(pin) !== expectedHash) {
+  if (!storedHash || await sha256(pin) !== storedHash) {
     setMessage("pinMessage", "Incorrect 4-digit code.");
     return;
   }
@@ -702,7 +707,27 @@ async function unlockWithPin() {
   await loadTrackers();
 }
 
+async function signOut() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+
+  currentUser = null;
+  currentTracker = null;
+  localStorage.removeItem("deadbeat_active_tracker");
+
+  showScreen("authScreen");
+  showSignIn();
+}
+
 async function loadTrackers() {
+  if (!supabase || !currentUser) return;
+
   const { data, error } = await supabase
     .from("trackers")
     .select("*")
@@ -762,9 +787,9 @@ async function createTracker() {
 }
 
 async function joinTracker() {
-  const inviteCode = $("inviteCode").value.trim();
+  const code = $("inviteCode").value.trim();
 
-  if (!inviteCode) {
+  if (!code) {
     setMessage("trackerMessage", "Enter an invite code.");
     return;
   }
@@ -772,7 +797,7 @@ async function joinTracker() {
   const { data, error } = await supabase.rpc(
     "join_tracker_by_invite",
     {
-      supplied_invite_code: inviteCode
+      supplied_invite_code: code
     }
   );
 
@@ -811,21 +836,19 @@ async function openSelectedTracker() {
 
   currentTracker = data;
 
-  localStorage.setItem(
-    "deadbeat_active_tracker",
-    currentTracker.id
-  );
-
-  $("trackerTitle").textContent = currentTracker.name;
-
+  $("trackerTitle").textContent = data.name;
   $("trackerInviteText").textContent =
-    `Invite Code: ${currentTracker.invite_code}`;
+    `Invite Code: ${data.invite_code}`;
 
   showScreen("appScreen");
 
   await loadTrackerData();
 
-  subscribeToTrackerChanges();
+  if (refreshTimer) clearInterval(refreshTimer);
+
+  refreshTimer = setInterval(() => {
+    if (currentTracker) loadTrackerData();
+  }, 15000);
 }
 
 async function loadTrackerData() {
@@ -883,11 +906,9 @@ function cardBalance(cardId) {
   entries
     .filter(entry => entry.card_id === cardId)
     .forEach(entry => {
-      if (entry.entry_type === "payment") {
-        total -= Number(entry.amount);
-      } else {
-        total += Number(entry.amount);
-      }
+      total += entry.entry_type === "payment"
+        ? -Number(entry.amount)
+        : Number(entry.amount);
     });
 
   return Math.max(0, total);
@@ -896,10 +917,7 @@ function cardBalance(cardId) {
 function totalSpending() {
   return entries
     .filter(entry => entry.entry_type === "expense")
-    .reduce(
-      (sum, entry) => sum + Number(entry.amount),
-      0
-    );
+    .reduce((sum, entry) => sum + Number(entry.amount), 0);
 }
 
 function monthSpending() {
@@ -908,33 +926,26 @@ function monthSpending() {
       entry.entry_type === "expense" &&
       String(entry.entry_date).slice(0, 7) === month()
     )
-    .reduce(
-      (sum, entry) => sum + Number(entry.amount),
-      0
-    );
+    .reduce((sum, entry) => sum + Number(entry.amount), 0);
 }
 
 function estimatedInterest(card) {
   const balance = cardBalance(card.id);
   const apr = Number(card.apr || 0);
 
-  if (balance <= 0 || apr <= 0) {
-    return 0;
-  }
+  if (balance <= 0 || apr <= 0) return 0;
 
   return balance * (
     Math.pow(1 + (apr / 100) / 365, 30) - 1
   );
 }
 
-function renderCardInfo(card) {
-  const balance = cardBalance(card.id);
-
+function cardInfo(card) {
   return `
     <div class="interest">
       Cycle End Day: ${card.cycle_end_day || "Not set"}<br>
       Due Day: ${card.due_day || "Not set"}<br>
-      Current Balance: ${cash(balance)}<br>
+      Current Balance: ${cash(cardBalance(card.id))}<br>
       Estimated 30-Day Interest if Unpaid:
       ${cash(estimatedInterest(card))}
     </div>
@@ -942,17 +953,17 @@ function renderCardInfo(card) {
 }
 
 function renderEntry(entry) {
-  const payment = entry.entry_type === "payment";
+  const isPayment = entry.entry_type === "payment";
 
   return `
     <button class="list" type="button"
       onclick="openEntry('${entry.id}')">
       <div class="row">
         <b>${esc(entry.merchant)}</b>
-        <b>${payment ? "−" : ""}${cash(entry.amount)}</b>
+        <b>${isPayment ? "−" : ""}${cash(entry.amount)}</b>
       </div>
       <div class="sub">
-        ${payment ? "Payment" : "Expense"} ·
+        ${isPayment ? "Payment" : "Expense"} ·
         ${entry.entry_date} ·
         ${esc(cardName(entry.card_id))}
       </div>
@@ -984,7 +995,7 @@ function render() {
         </div>
         <strong>${cash(cardBalance(card.id))}</strong>
         <div class="sub">Current calculated balance</div>
-        ${renderCardInfo(card)}
+        ${cardInfo(card)}
       </div>
     `).join("")
     : `<div class="card">No credit cards saved.</div>`;
@@ -1005,7 +1016,7 @@ function render() {
           ${card.last_four ? `•••• ${card.last_four}` : ""}
         </div>
         <strong>${cash(cardBalance(card.id))}</strong>
-        ${renderCardInfo(card)}
+        ${cardInfo(card)}
 
         <div class="actions">
           <button class="secondary" type="button"
@@ -1105,22 +1116,18 @@ async function saveEntry(event) {
     created_by: currentUser.id
   };
 
-  let result;
-
-  if (id) {
-    result = await supabase
-      .from("entries")
-      .update(record)
-      .eq("id", id)
-      .select()
-      .single();
-  } else {
-    result = await supabase
-      .from("entries")
-      .insert(record)
-      .select()
-      .single();
-  }
+  const result = id
+    ? await supabase
+        .from("entries")
+        .update(record)
+        .eq("id", id)
+        .select()
+        .single()
+    : await supabase
+        .from("entries")
+        .insert(record)
+        .select()
+        .single();
 
   if (result.error) {
     alert(result.error.message);
@@ -1193,22 +1200,18 @@ async function saveCard(event) {
     starting_balance: Number($("cardBalance").value || 0)
   };
 
-  let result;
-
-  if (id) {
-    result = await supabase
-      .from("cards")
-      .update(record)
-      .eq("id", id)
-      .select()
-      .single();
-  } else {
-    result = await supabase
-      .from("cards")
-      .insert(record)
-      .select()
-      .single();
-  }
+  const result = id
+    ? await supabase
+        .from("cards")
+        .update(record)
+        .eq("id", id)
+        .select()
+        .single()
+    : await supabase
+        .from("cards")
+        .insert(record)
+        .select()
+        .single();
 
   if (result.error) {
     alert(result.error.message);
@@ -1268,37 +1271,12 @@ async function saveBudget() {
   render();
 }
 
-function subscribeToTrackerChanges() {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
+async function initialize() {
+  if (!supabase) {
+    showScreen("authScreen");
+    return;
   }
 
-  realtimeChannel = supabase
-    .channel(`tracker-${currentTracker.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "cards",
-        filter: `tracker_id=eq.${currentTracker.id}`
-      },
-      loadTrackerData
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "entries",
-        filter: `tracker_id=eq.${currentTracker.id}`
-      },
-      loadTrackerData
-    )
-    .subscribe();
-}
-
-async function initialize() {
   const {
     data: { session }
   } = await supabase.auth.getSession();
@@ -1319,17 +1297,17 @@ async function initialize() {
   }
 }
 
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase?.auth.onAuthStateChange((_event, session) => {
   if (session?.user) {
     currentUser = session.user;
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const pinHash = localStorage.getItem("deadbeat_quick_pin_hash");
 
       if (pinHash) {
         showScreen("pinScreen");
       } else {
-        await loadTrackers();
+        loadTrackers();
       }
     }, 0);
   } else {
@@ -1359,3 +1337,4 @@ initialize();
 </script>
 </body>
 </html>
+
