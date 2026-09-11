@@ -617,7 +617,7 @@ async function signUp() {
     return;
   }
 
-  const { error } = await supabaseClient.auth.signUp({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
     options: {
@@ -643,7 +643,7 @@ async function signIn() {
   const email = $("signInEmail").value.trim();
   const password = $("signInPassword").value;
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password
   });
@@ -661,7 +661,7 @@ async function sendPasswordReset() {
     return;
   }
 
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname
   });
 
@@ -673,12 +673,12 @@ async function sendPasswordReset() {
 
 async function signOut() {
   if (realtimeChannel) {
-    await supabaseClient.removeChannel(realtimeChannel);
+    await supabase.removeChannel(realtimeChannel);
     realtimeChannel = null;
   }
 
   localStorage.removeItem("deadbeat_active_tracker");
-  await supabaseClient.auth.signOut();
+  await supabase.auth.signOut();
 
   currentUser = null;
   currentTracker = null;
@@ -786,7 +786,7 @@ async function joinTracker() {
     return;
   }
 
-  const { data, error } = await supabaseClient.rpc(
+  const { data, error } = await supabase.rpc(
     "join_tracker_by_invite",
     {
       supplied_invite_code: inviteCode
@@ -1335,7 +1335,7 @@ async function initialize() {
   }
 }
 
-supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+supabase.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
     currentUser = session.user;
 
