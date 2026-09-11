@@ -347,7 +347,7 @@ label { display:block; margin-bottom:4px; font-size:.84rem; font-weight:700; }
         <div class="card">
           <div class="row">
             <h2 style="margin:0;font-size:1.1rem">Monthly Budget</h2>
-            <button class="secondary" type="button" onclick="openBudget()">Edit Budget</button>
+            <button class="secondary" type="button" onclick="openSettings()">Edit Budget</button>
           </div>
           <p class="sub">Spent This Calendar Month: <b id="monthSpent">$0.00</b></p>
           <p class="sub">Still Allotted to Spend: <b id="monthRemaining">$0.00</b></p>
@@ -639,27 +639,37 @@ async function signUp() {
   );
 }
 
-async function signIn() {
-  const email = $("signInEmail").value.trim();
-  const password = $("signInPassword").value;
+async function signUp() {
+  const displayName = $("signUpName").value.trim();
+  const email = $("signUpEmail").value.trim();
+  const password = $("signUpPassword").value;
 
-  const { error } = await supabase.auth.signInWithPassword({
+  if (!email || !password) {
+    setMessage("authMessage", "Enter an email address and password.");
+    return;
+  }
+
+  const { error } = await supabase.auth.signUp({
     email,
-    password
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname,
+      data: {
+        display_name: displayName
+      }
+    }
   });
 
   if (error) {
     setMessage("authMessage", error.message);
-  }
-}
-
-async function sendPasswordReset() {
-  const email = $("signInEmail").value.trim();
-
-  if (!email) {
-    setMessage("authMessage", "Enter your email address first.");
     return;
   }
+
+  setMessage(
+    "authMessage",
+    "Account created. Check your email and confirm your account before signing in."
+  );
+}
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname
@@ -1274,7 +1284,7 @@ async function saveBudget() {
 
 function subscribeToTrackerChanges() {
   if (realtimeChannel) {
-    supabaseClient.removeChannel(realtimeChannel);
+    supabase.removeChannel(realtimeChannel);
   }
 
   realtimeChannel = supabase
@@ -1317,7 +1327,7 @@ async function initialize() {
 
   const {
     data: { session }
-  } = await supabaseClient.auth.getSession();
+  } = await supabase.auth.getSession();
 
   if (!session) {
     showScreen("authScreen");
