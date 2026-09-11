@@ -4,22 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#12355b">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Deadbeat Tracker</title>
 
 <style>
-  .password-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.password-row input {
-  flex: 1;
-}
-
-.password-row button {
-  white-space: nowrap;
-}
 :root{
   --navy:#12355b;--blue:#1d73c9;--green:#13795b;--red:#b42318;
   --bg:#f4f7fb;--text:#172033;--muted:#64748b;--border:#d9e1ec
@@ -30,17 +18,17 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif
 }
 button,input,select,textarea{font:inherit}
-button{cursor:pointer;border:0;border-radius:9px;padding:10px;font-weight:700}
+button{border:0;border-radius:9px;padding:10px;cursor:pointer;font-weight:700}
 input,select,textarea{
   width:100%;padding:10px;border:1px solid #bdc9d8;
-  border-radius:9px;background:white
+  border-radius:9px;background:white;color:var(--text)
 }
 textarea{min-height:72px;resize:vertical}
 .hidden{display:none!important}
 .screen{display:none;min-height:100vh}
 .screen.active{display:block}
-.auth-wrap{max-width:440px;margin:auto;padding:70px 18px}
-.app{max-width:760px;margin:auto;padding-bottom:95px}
+.auth-wrap{max-width:440px;margin:auto;padding:65px 18px}
+.app{max-width:760px;margin:auto;padding-bottom:96px}
 header{background:var(--navy);color:white;padding:18px}
 header h1{margin:0;font-size:1.3rem}
 header p{margin:4px 0 0;color:#cbdcf1;font-size:.85rem}
@@ -63,6 +51,7 @@ main{padding:16px}
 .group{margin-top:12px}
 label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
 .sub{font-size:.84rem;color:var(--muted)}
+.error{margin-top:10px;color:var(--red);font-size:.85rem}
 .card strong{display:block;margin-top:12px;font-size:1.35rem}
 .interest{
   margin-top:9px;padding-top:9px;border-top:1px solid var(--border);
@@ -79,11 +68,9 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   border-bottom:1px solid var(--border);border-radius:0
 }
 .list:last-child{border-bottom:0}
-.error{margin-top:10px;color:var(--red);font-size:.85rem}
-.notice{
-  margin-top:12px;padding:10px;border-radius:9px;
-  background:#fff9e8;color:#725817;font-size:.85rem
-}
+.password-row{display:flex;gap:8px;align-items:center}
+.password-row input{flex:1}
+.eye{width:44px;height:42px;padding:0;font-size:1.1rem;background:#e8eef6;color:var(--navy)}
 .modal-bg{
   display:none;position:fixed;z-index:20;inset:0;padding:14px;
   align-items:flex-end;justify-content:center;background:#0008
@@ -109,6 +96,10 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   position:fixed;z-index:9;right:20px;bottom:82px;
   border-radius:50%;background:var(--blue);color:white;font-size:1.5rem
 }
+.notice{
+  margin-top:12px;padding:10px;border-radius:9px;
+  background:#fff9e8;color:#725817;font-size:.85rem
+}
 @media(max-width:430px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -127,26 +118,22 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
       <div id="signInPanel">
         <h2>Sign In</h2>
 
-<div class="group">
-  <label for="signInPassword">Password</label>
+        <div class="group">
+          <label for="signInEmail">Email</label>
+          <input id="signInEmail" type="email" autocomplete="email">
+        </div>
 
-  <div class="password-row">
-    <input id="signInPassword" type="password">
-
-    <button type="button" class="secondary"
-      onclick="togglePassword('signInPassword', this)">
-      Show
-    </button>
-  </div>
-</div>
         <div class="group">
           <label for="signInPassword">Password</label>
-          <input id="signInPassword" type="password">
+          <div class="password-row">
+            <input id="signInPassword" type="password" autocomplete="current-password">
+            <button type="button" class="eye" onclick="togglePassword('signInPassword', this)">👁</button>
+          </div>
         </div>
 
         <div class="actions">
           <button class="primary" type="button" onclick="signIn()">Sign In</button>
-          <button class="secondary" type="button"   onclick="document.getElementById('signInPanel').classList.add('hidden'); document.getElementById('signUpPanel').classList.remove('hidden');">   Create Account </button>
+          <button class="secondary" type="button" onclick="showSignUp()">Create Account</button>
         </div>
 
         <button class="secondary" style="width:100%;margin-top:10px" type="button" onclick="sendPasswordReset()">
@@ -159,26 +146,21 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
 
         <div class="group">
           <label for="signUpName">Display Name</label>
-          <input id="signUpName">
+          <input id="signUpName" autocomplete="name">
         </div>
 
         <div class="group">
           <label for="signUpEmail">Email</label>
-          <input id="signUpEmail" type="email">
+          <input id="signUpEmail" type="email" autocomplete="email">
         </div>
 
-<div class="group">
-  <label for="signUpPassword">Password</label>
-
-  <div class="password-row">
-    <input id="signUpPassword" type="password">
-
-    <button type="button" class="secondary"
-      onclick="togglePassword('signUpPassword', this)">
-      Show
-    </button>
-  </div>
-</div>
+        <div class="group">
+          <label for="signUpPassword">Password</label>
+          <div class="password-row">
+            <input id="signUpPassword" type="password" autocomplete="new-password">
+            <button type="button" class="eye" onclick="togglePassword('signUpPassword', this)">👁</button>
+          </div>
+        </div>
 
         <div class="actions">
           <button class="primary" type="button" onclick="signUp()">Sign Up</button>
@@ -189,7 +171,7 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   </div>
 </section>
 
-<!-- QUICK PIN SCREEN -->
+<!-- PIN UNLOCK -->
 <section id="pinScreen" class="screen">
   <div class="auth-wrap">
     <div class="card">
@@ -228,7 +210,7 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
         <select id="trackerSelect"></select>
       </div>
 
-      <button class="primary" style="width:100%;margin-top:10px" type="button" onclick="openSelectedTracker()">
+      <button class="primary" type="button" style="width:100%;margin-top:10px" onclick="openSelectedTracker()">
         Open Selected Tracker
       </button>
 
@@ -241,7 +223,7 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
         <input id="newTrackerName" placeholder="Example: Smith Family Tracker">
       </div>
 
-      <button class="success" style="width:100%;margin-top:10px" type="button" onclick="createTracker()">
+      <button class="success" type="button" style="width:100%;margin-top:10px" onclick="createTracker()">
         Create Tracker
       </button>
 
@@ -254,7 +236,7 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
         <input id="inviteCode" placeholder="Example: A1B2C3D4">
       </div>
 
-      <button class="secondary" style="width:100%;margin-top:10px" type="button" onclick="joinTracker()">
+      <button class="secondary" type="button" style="width:100%;margin-top:10px" onclick="joinTracker()">
         Join Tracker
       </button>
 
@@ -473,55 +455,24 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   </div>
 </div>
 
-<script>
-const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7Oe";
 
-let supabase = null;
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 const $ = id => document.getElementById(id);
 
-let supabase = null;
 let currentUser = null;
 let currentTracker = null;
 let cards = [];
 let entries = [];
 let refreshTimer = null;
-
-function setMessage(id, message) {
-  const item = $(id);
-  if (item) item.textContent = message || "";
-}
-
-function showError(message) {
-  setMessage("authMessage", message);
-  console.error(message);
-}
-
-function initializeSupabase() {
-  try {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error("Supabase library did not load.");
-    }
-
-    if (
-      SUPABASE_URL.includes("PASTE_") ||
-      SUPABASE_PUBLISHABLE_KEY.includes("PASTE_")
-    ) {
-      throw new Error(
-        "Add your Supabase Project URL and Publishable Key in index.html."
-      );
-    }
-
-    supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-  } catch (error) {
-    showError(error.message);
-  }
-}
 
 function cash(value) {
   return new Intl.NumberFormat("en-US", {
@@ -547,6 +498,11 @@ function today() {
 
 function month() {
   return today().slice(0, 7);
+}
+
+function setMessage(id, message) {
+  const element = $(id);
+  if (element) element.textContent = message || "";
 }
 
 function showScreen(id) {
@@ -581,19 +537,6 @@ function togglePassword(fieldId, button) {
 }
 
 async function signUp() {
-   if (!supabase) {
-    setMessage(
-      "authMessage",
-      "Supabase is still connecting. Wait a few seconds and try again."
-    );
-    return;
-  }
-  const displayName = $("signUpName").value.trim();
-    if (!supabase) {
-    showError("Supabase is not connected.");
-    return;
-  }
-
   const displayName = $("signUpName").value.trim();
   const email = $("signUpEmail").value.trim();
   const password = $("signUpPassword").value;
@@ -622,25 +565,14 @@ async function signUp() {
       "Account created. Check your email and confirm your account before signing in."
     );
   } catch (error) {
-    setMessage("authMessage", error.message || "Unable to create account.");
+    setMessage(
+      "authMessage",
+      error.message || "Unable to create account."
+    );
   }
 }
 
 async function signIn() {
-    if (!supabase) {
-    setMessage(
-      "authMessage",
-      "Supabase is still connecting. Wait a few seconds and try again."
-    );
-    return;
-  }
-
-  const email = $("signInEmail").value.trim();
-  if (!supabase) {
-    showError("Supabase is not connected.");
-    return;
-  }
-
   const email = $("signInEmail").value.trim();
   const password = $("signInPassword").value;
 
@@ -657,16 +589,14 @@ async function signIn() {
 
     if (error) throw error;
   } catch (error) {
-    setMessage("authMessage", error.message || "Unable to sign in.");
+    setMessage(
+      "authMessage",
+      error.message || "Unable to sign in."
+    );
   }
 }
 
 async function sendPasswordReset() {
-  if (!supabase) {
-    showError("Supabase is not connected.");
-    return;
-  }
-
   const email = $("signInEmail").value.trim();
 
   if (!email) {
@@ -683,7 +613,10 @@ async function sendPasswordReset() {
 
     setMessage("authMessage", "Password-reset email sent.");
   } catch (error) {
-    setMessage("authMessage", error.message || "Unable to send reset email.");
+    setMessage(
+      "authMessage",
+      error.message || "Unable to send reset email."
+    );
   }
 }
 
@@ -714,7 +647,9 @@ async function setPin() {
 
 async function unlockWithPin() {
   const pin = $("unlockPin").value;
-  const storedHash = localStorage.getItem("deadbeat_quick_pin_hash");
+  const storedHash = localStorage.getItem(
+    "deadbeat_quick_pin_hash"
+  );
 
   if (!storedHash || await sha256(pin) !== storedHash) {
     setMessage("pinMessage", "Incorrect 4-digit code.");
@@ -730,21 +665,16 @@ async function signOut() {
     refreshTimer = null;
   }
 
-  if (supabase) {
-    await supabase.auth.signOut();
-  }
+  await supabase.auth.signOut();
 
   currentUser = null;
   currentTracker = null;
-  localStorage.removeItem("deadbeat_active_tracker");
 
   showScreen("authScreen");
   showSignIn();
 }
 
 async function loadTrackers() {
-  if (!supabase || !currentUser) return;
-
   const { data, error } = await supabase
     .from("trackers")
     .select("*")
@@ -970,17 +900,17 @@ function cardInfo(card) {
 }
 
 function renderEntry(entry) {
-  const isPayment = entry.entry_type === "payment";
+  const payment = entry.entry_type === "payment";
 
   return `
     <button class="list" type="button"
-      onclick="openEntry('${entry.id}')">
+      onclick="window.openEntry('${entry.id}')">
       <div class="row">
         <b>${esc(entry.merchant)}</b>
-        <b>${isPayment ? "−" : ""}${cash(entry.amount)}</b>
+        <b>${payment ? "−" : ""}${cash(entry.amount)}</b>
       </div>
       <div class="sub">
-        ${isPayment ? "Payment" : "Expense"} ·
+        ${payment ? "Payment" : "Expense"} ·
         ${entry.entry_date} ·
         ${esc(cardName(entry.card_id))}
       </div>
@@ -996,7 +926,6 @@ function render() {
   $("totalSpending").textContent = cash(totalSpending());
   $("monthSpent").textContent = cash(spent);
   $("monthRemaining").textContent = cash(remaining);
-
   $("monthRemaining").style.color =
     remaining < 0 ? "var(--red)" : "var(--green)";
 
@@ -1037,7 +966,7 @@ function render() {
 
         <div class="actions">
           <button class="secondary" type="button"
-            onclick="openCard('${card.id}')">
+            onclick="window.openCard('${card.id}')">
             Edit Card
           </button>
         </div>
@@ -1289,11 +1218,6 @@ async function saveBudget() {
 }
 
 async function initialize() {
-  if (!supabase) {
-    showScreen("authScreen");
-    return;
-  }
-
   const {
     data: { session }
   } = await supabase.auth.getSession();
@@ -1314,6 +1238,26 @@ async function initialize() {
   }
 }
 
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (session?.user) {
+    currentUser = session.user;
+
+    setTimeout(() => {
+      const pinHash = localStorage.getItem("deadbeat_quick_pin_hash");
+
+      if (pinHash) {
+        showScreen("pinScreen");
+      } else {
+        loadTrackers();
+      }
+    }, 0);
+  } else {
+    currentUser = null;
+    currentTracker = null;
+    showScreen("authScreen");
+  }
+});
+
 document.querySelectorAll(".modal-bg").forEach(modal => {
   modal.addEventListener("click", event => {
     if (event.target === modal) {
@@ -1330,55 +1274,32 @@ document.addEventListener("keydown", event => {
   }
 });
 
-async function bootSupabase() {
-  try {
-    const { createClient } = await import(
-      "https://esm.sh/@supabase/supabase-js@2"
-    );
+Object.assign(window, {
+  showSignIn,
+  showSignUp,
+  togglePassword,
+  signUp,
+  signIn,
+  sendPasswordReset,
+  unlockWithPin,
+  signOut,
+  createTracker,
+  joinTracker,
+  openSelectedTracker,
+  showPage,
+  openEntry,
+  openCard,
+  closeModal,
+  openSettings,
+  saveBudget,
+  setPin,
+  saveEntry,
+  deleteEntry,
+  saveCard,
+  deleteCard
+});
 
-    supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        currentUser = session.user;
-
-        setTimeout(() => {
-          const pinHash = localStorage.getItem(
-            "deadbeat_quick_pin_hash"
-          );
-
-          if (pinHash) {
-            showScreen("pinScreen");
-          } else {
-            loadTrackers();
-          }
-        }, 0);
-      } else {
-        currentUser = null;
-        currentTracker = null;
-        showScreen("authScreen");
-      }
-    });
-
-    await initialize();
-
-  } catch (error) {
-    console.error("Supabase startup error:", error);
-
-    showScreen("authScreen");
-
-    setMessage(
-      "authMessage",
-      "Supabase connection failed. Verify the Project URL and Publishable Key."
-    );
-  }
-}
-
-bootSupabase();
+initialize();
 </script>
 </body>
 </html>
-
