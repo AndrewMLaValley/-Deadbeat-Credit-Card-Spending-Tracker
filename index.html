@@ -541,10 +541,11 @@ label { display:block; margin-bottom:4px; font-size:.84rem; font-weight:700; }
    Replace only the two values below.
    ========================= */
 
-const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabaseClient.co";";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7OeERE";
+const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co"
 
-const supabase = window.supabaseClient.createClient(
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7Oe";
+
+const supabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
