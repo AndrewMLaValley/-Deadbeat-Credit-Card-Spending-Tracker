@@ -473,12 +473,12 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7Oe";
+
+let supabase = null;
 
 const $ = id => document.getElementById(id);
 
@@ -581,7 +581,15 @@ function togglePassword(fieldId, button) {
 }
 
 async function signUp() {
-  if (!supabase) {
+   if (!supabase) {
+    setMessage(
+      "authMessage",
+      "Supabase is still connecting. Wait a few seconds and try again."
+    );
+    return;
+  }
+  const displayName = $("signUpName").value.trim();
+    if (!supabase) {
     showError("Supabase is not connected.");
     return;
   }
@@ -619,6 +627,15 @@ async function signUp() {
 }
 
 async function signIn() {
+    if (!supabase) {
+    setMessage(
+      "authMessage",
+      "Supabase is still connecting. Wait a few seconds and try again."
+    );
+    return;
+  }
+
+  const email = $("signInEmail").value.trim();
   if (!supabase) {
     showError("Supabase is not connected.");
     return;
@@ -1297,26 +1314,6 @@ async function initialize() {
   }
 }
 
-supabase?.auth.onAuthStateChange((_event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-
-    setTimeout(() => {
-      const pinHash = localStorage.getItem("deadbeat_quick_pin_hash");
-
-      if (pinHash) {
-        showScreen("pinScreen");
-      } else {
-        loadTrackers();
-      }
-    }, 0);
-  } else {
-    currentUser = null;
-    currentTracker = null;
-    showScreen("authScreen");
-  }
-});
-
 document.querySelectorAll(".modal-bg").forEach(modal => {
   modal.addEventListener("click", event => {
     if (event.target === modal) {
@@ -1333,7 +1330,54 @@ document.addEventListener("keydown", event => {
   }
 });
 
-initialize();
+async function bootSupabase() {
+  try {
+    const { createClient } = await import(
+      "https://esm.sh/@supabase/supabase-js@2"
+    );
+
+    supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        currentUser = session.user;
+
+        setTimeout(() => {
+          const pinHash = localStorage.getItem(
+            "deadbeat_quick_pin_hash"
+          );
+
+          if (pinHash) {
+            showScreen("pinScreen");
+          } else {
+            loadTrackers();
+          }
+        }, 0);
+      } else {
+        currentUser = null;
+        currentTracker = null;
+        showScreen("authScreen");
+      }
+    });
+
+    await initialize();
+
+  } catch (error) {
+    console.error("Supabase startup error:", error);
+
+    showScreen("authScreen");
+
+    setMessage(
+      "authMessage",
+      "Supabase connection failed. Verify the Project URL and Publishable Key."
+    );
+  }
+}
+
+bootSupabase();
 </script>
 </body>
 </html>
