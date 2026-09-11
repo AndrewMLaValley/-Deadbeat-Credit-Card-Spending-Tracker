@@ -7,6 +7,19 @@
 <title>Deadbeat Tracker</title>
 
 <style>
+  .password-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-row input {
+  flex: 1;
+}
+
+.password-row button {
+  white-space: nowrap;
+}
 :root{
   --navy:#12355b;--blue:#1d73c9;--green:#13795b;--red:#b42318;
   --bg:#f4f7fb;--text:#172033;--muted:#64748b;--border:#d9e1ec
@@ -114,11 +127,18 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
       <div id="signInPanel">
         <h2>Sign In</h2>
 
-        <div class="group">
-          <label for="signInEmail">Email</label>
-          <input id="signInEmail" type="email">
-        </div>
+<div class="group">
+  <label for="signInPassword">Password</label>
 
+  <div class="password-row">
+    <input id="signInPassword" type="password">
+
+    <button type="button" class="secondary"
+      onclick="togglePassword('signInPassword', this)">
+      Show
+    </button>
+  </div>
+</div>
         <div class="group">
           <label for="signInPassword">Password</label>
           <input id="signInPassword" type="password">
@@ -147,10 +167,18 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
           <input id="signUpEmail" type="email">
         </div>
 
-        <div class="group">
-          <label for="signUpPassword">Password</label>
-          <input id="signUpPassword" type="password">
-        </div>
+<div class="group">
+  <label for="signUpPassword">Password</label>
+
+  <div class="password-row">
+    <input id="signUpPassword" type="password">
+
+    <button type="button" class="secondary"
+      onclick="togglePassword('signUpPassword', this)">
+      Show
+    </button>
+  </div>
+</div>
 
         <div class="actions">
           <button class="primary" type="button" onclick="signUp()">Sign Up</button>
@@ -515,6 +543,17 @@ function showSignUp() {
 function setMessage(id, message) {
   $(id).textContent = message || "";
 }
+function togglePassword(fieldId, button) {
+  const field = document.getElementById(fieldId);
+
+  if (field.type === "password") {
+    field.type = "text";
+    button.textContent = "Hide";
+  } else {
+    field.type = "password";
+    button.textContent = "Show";
+  }
+}
 
 async function signUp() {
   const displayName = $("signUpName").value.trim();
@@ -522,48 +561,71 @@ async function signUp() {
   const password = $("signUpPassword").value;
 
   if (!email || !password) {
-    setMessage("authMessage", "Enter an email address and password.");
+    const message = "Enter an email address and password.";
+    setMessage("authMessage", message);
+    alert(message);
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin + window.location.pathname,
-      data: {
-        display_name: displayName
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin + window.location.pathname,
+        data: {
+          display_name: displayName
+        }
       }
+    });
+
+    if (error) {
+      throw error;
     }
-  });
 
-  if (error) {
-    setMessage("authMessage", error.message);
-    return;
+    const successMessage =
+      "Account created. Check your email and confirm your account before signing in.";
+
+    setMessage("authMessage", successMessage);
+    alert(successMessage);
+
+  } catch (error) {
+    console.error("Sign-up error:", error);
+
+    const message = error.message || "Unable to create the account.";
+
+    setMessage("authMessage", message);
+    alert(message);
   }
-
-  setMessage(
-    "authMessage",
-    "Account created. Check your email and confirm your account before signing in."
-  );
 }
-
 async function signIn() {
   const email = $("signInEmail").value.trim();
   const password = $("signInPassword").value;
 
   if (!email || !password) {
-    setMessage("authMessage", "Enter your email address and password.");
+    const message = "Enter your email address and password.";
+    setMessage("authMessage", message);
+    alert(message);
     return;
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-  if (error) {
-    setMessage("authMessage", error.message);
+    if (error) {
+      throw error;
+    }
+
+  } catch (error) {
+    console.error("Sign-in error:", error);
+
+    const message = error.message || "Unable to sign in.";
+
+    setMessage("authMessage", message);
+    alert(message);
   }
 }
 
