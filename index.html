@@ -541,10 +541,10 @@ label { display:block; margin-bottom:4px; font-size:.84rem; font-weight:700; }
    Replace only the two values below.
    ========================= */
 
-const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";";
+const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabaseClient.co";";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7OeERE";
 
-const supabase = window.supabase.createClient(
+const supabase = window.supabaseClient.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
@@ -616,7 +616,7 @@ async function signUp() {
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { error } = await supabaseClient.auth.signUp({
     email,
     password,
     options: {
@@ -642,7 +642,7 @@ async function signIn() {
   const email = $("signInEmail").value.trim();
   const password = $("signInPassword").value;
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabaseClient.auth.signInWithPassword({
     email,
     password
   });
@@ -660,7 +660,7 @@ async function sendPasswordReset() {
     return;
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname
   });
 
@@ -672,12 +672,12 @@ async function sendPasswordReset() {
 
 async function signOut() {
   if (realtimeChannel) {
-    await supabase.removeChannel(realtimeChannel);
+    await supabaseClient.removeChannel(realtimeChannel);
     realtimeChannel = null;
   }
 
   localStorage.removeItem("deadbeat_active_tracker");
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
 
   currentUser = null;
   currentTracker = null;
@@ -785,7 +785,7 @@ async function joinTracker() {
     return;
   }
 
-  const { data, error } = await supabase.rpc(
+  const { data, error } = await supabaseClient.rpc(
     "join_tracker_by_invite",
     {
       supplied_invite_code: inviteCode
@@ -1273,7 +1273,7 @@ async function saveBudget() {
 
 function subscribeToTrackerChanges() {
   if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
+    supabaseClient.removeChannel(realtimeChannel);
   }
 
   realtimeChannel = supabase
@@ -1316,7 +1316,7 @@ async function initialize() {
 
   const {
     data: { session }
-  } = await supabase.auth.getSession();
+  } = await supabaseClient.auth.getSession();
 
   if (!session) {
     showScreen("authScreen");
@@ -1334,7 +1334,7 @@ async function initialize() {
   }
 }
 
-supabase.auth.onAuthStateChange(async (_event, session) => {
+supabaseClient.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
     currentUser = session.user;
 
