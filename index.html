@@ -126,7 +126,7 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
 
         <div class="actions">
           <button class="primary" type="button" onclick="signIn()">Sign In</button>
-          <button class="secondary" type="button" onclick="showSignUp()">Create Account</button>
+          <button class="secondary" type="button"   onclick="document.getElementById('signInPanel').classList.add('hidden'); document.getElementById('signUpPanel').classList.remove('hidden');">   Create Account </button>
         </div>
 
         <button class="secondary" style="width:100%;margin-top:10px" type="button" onclick="sendPasswordReset()">
@@ -445,18 +445,20 @@ label{display:block;margin-bottom:4px;font-size:.84rem;font-weight:700}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 const SUPABASE_URL = "https://jjffdtsohryyubmjnq.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z8T064Vr5NmU6-ICT1EZbQ_pn4so7Oe";
 
-const supabase = window.supabase.createClient(
+const { createClient } = window.supabase;
+
+const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
-
+console.log("Deadbeat Tracker JavaScript loaded successfully.");
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
